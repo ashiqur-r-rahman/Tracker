@@ -23,5 +23,6 @@ export async function POST(request: Request) {
   if (downloadLink) { try { const url = new URL(downloadLink); if (!["http:", "https:"].includes(url.protocol)) throw new Error(); } catch { return NextResponse.json({ error: "Download link must be a valid HTTP or HTTPS URL" }, { status: 400 }); } }
   const { data, error } = await supabase.from("papers").insert({ title, topic, doi, download_link: downloadLink, created_by: user.id }).select("id, title, topic, doi, download_link, created_at").single();
   if (error) return NextResponse.json({ error: error.code === "23505" ? "A paper with this DOI already exists" : error.message }, { status: 400 });
+  await supabase.from("activity_feed").insert({ actor_id: user.id, verb: "added", entity_type: "paper", entity_id: data.id, summary: `added paper ${data.title}` });
   return NextResponse.json({ paper: data }, { status: 201 });
 }

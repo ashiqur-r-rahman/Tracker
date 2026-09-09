@@ -19,5 +19,6 @@ export async function POST(request: Request) {
   if (!note) return NextResponse.json({ error: "Note is required" }, { status: 400 });
   const { data, error } = await supabase.from("attention_notes").insert({ body: note, author_id: user.id }).select("id, body, is_resolved, created_at").single();
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+  await supabase.from("activity_feed").insert({ actor_id: user.id, verb: "posted", entity_type: "attention", entity_id: data.id, summary: "posted an attention note" });
   return NextResponse.json({ note: data }, { status: 201 });
 }

@@ -6,8 +6,11 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { projectId } = await params;
+  const existing = await supabase.from("projects").select("name").eq("id", projectId).maybeSingle();
+  if (!existing.data) return NextResponse.json({ error: "Project not found" }, { status: 404 });
   const { error } = await supabase.from("projects").delete().eq("id", projectId);
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+  await supabase.from("activity_feed").insert({ actor_id: user.id, verb: "deleted", entity_type: "project", entity_id: projectId, summary: `deleted project ${existing.data.name}` });
   return NextResponse.json({ ok: true });
 }
 
