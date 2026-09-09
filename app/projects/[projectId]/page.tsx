@@ -3,6 +3,7 @@ import { AppShell } from "@/components/app-shell";
 import { TaskWorkspace } from "@/components/task-workspace";
 import { ProjectActions } from "@/components/project-actions";
 import { createClient } from "@/lib/supabase/server";
+import { getUsername } from "@/lib/profile";
 
 export default async function ProjectPage({ params }: { params: Promise<{ projectId: string }> }) {
   const supabase = await createClient();
@@ -12,6 +13,6 @@ export default async function ProjectPage({ params }: { params: Promise<{ projec
     supabase.from("tasks").select("id, task_what, goal, source, source_link, expected_duration_minutes, task_state, completion_summary, users_profile!tasks_created_by_fkey(display_name, username)").eq("project_id", projectId).order("created_at", { ascending: false }),
   ]);
   if (!project) notFound();
-  const creator = project.users_profile?.[0];
-  return <AppShell><main className="content"><div className="heading"><div><span className="mono">Workspace / Projects / Project</span><h1>{project.name}</h1><p>{project.description || "No description yet."}</p><small className={`creator-label user-${creator?.username || "member"}`}>Created by {creator?.username || "member"}</small></div><ProjectActions projectId={projectId} /></div><TaskWorkspace projectId={projectId} tasks={(tasks || []) as never[]} /></main></AppShell>;
+  const username = getUsername(project.users_profile);
+  return <AppShell><main className="content"><div className="heading"><div><span className="mono">Workspace / Projects / Project</span><h1>{project.name}</h1><p>{project.description || "No description yet."}</p><small className={`creator-label user-${username}`}>Created by {username}</small></div><ProjectActions projectId={projectId} /></div><TaskWorkspace projectId={projectId} tasks={(tasks || []) as never[]} /></main></AppShell>;
 }
